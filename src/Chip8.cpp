@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <fstream>
 #include <ios>
+#include <cstring>
 
 #include <stdlib.h> /* srand, rand */
 #include <time.h>   /* time */
