@@ -1,0 +1,55 @@
+{
+    __meta__ = {
+        version = "1.0"
+    },
+    ["windows|x64"] = {
+        ["cmake#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "0d7b67b66cb46839eb4dd225e91d39155eb95e26",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
+            },
+            version = "3.21.0"
+        },
+        ["cxxopts#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "0d7b67b66cb46839eb4dd225e91d39155eb95e26",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
+            },
+            version = "v2.2.0"
+        },
+        ["glew#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "0d7b67b66cb46839eb4dd225e91d39155eb95e26",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
+            },
+            version = "2.2.0"
+        },
+        ["glfw#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "0d7b67b66cb46839eb4dd225e91d39155eb95e26",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
+            },
+            version = "3.3.4"
+        },
+        ["openal-soft#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "0d7b67b66cb46839eb4dd225e91d39155eb95e26",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
+            },
+            version = "1.21.1"
+        },
+        ["opengl#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "0d7b67b66cb46839eb4dd225e91d39155eb95e26",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
+            },
+            version = "latest"
+        }
+    }
+}
