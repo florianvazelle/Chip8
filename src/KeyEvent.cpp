@@ -1,6 +1,6 @@
 #include "KeyEvent.hpp"
 
-#include <GLFW/glfw3.h>
+#include <glfw/glfw3.h>
 
 static int keymap(int keycode) {
     switch (keycode) {

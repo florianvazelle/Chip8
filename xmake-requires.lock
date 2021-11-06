@@ -35,6 +35,14 @@
             },
             version = "3.3.4"
         },
+        ["glm#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "0d7b67b66cb46839eb4dd225e91d39155eb95e26",
+                url = "https://gitlab.com/tboox/xmake-repo.git"
+            },
+            version = "0.9.9+8"
+        },
         ["openal-soft#31fecfc4"] = {
             repo = {
                 branch = "master",

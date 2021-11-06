@@ -1,6 +1,7 @@
 #include "Chip8.hpp"
 
 #include "Log.hpp"
+#include "Const.hpp"
 
 #include <stdexcept>
 #include <fstream>
@@ -12,22 +13,21 @@
 
 void Chip8::Initialize() {
     pc       = 0x200; // Program counter starts at 0x200
-    opcode   = 0;     // Reset current opcode
     I        = 0;     // Reset index register
     sp       = 0;     // Reset stack pointer
     drawFlag = true;
 
     // Clear display
-    memset(gfx, 0, sizeof(unsigned char) * 64 * 32);
+    renderer.Clear();
 
     // Clear stack
-    memset(stack, 0, sizeof(unsigned short) * 16);
+    memset(stack, 0, sizeof(uint16_t) * 16);
 
     // Clear registers V0-VF
-    memset(V, 0, sizeof(unsigned char) * 16);
+    memset(V, 0, sizeof(uint8_t) * 16);
 
     // Clear memory
-    memset(memory, 0, sizeof(unsigned char) * 4096);
+    memset(memory, 0, sizeof(uint8_t) * 4096);
 
     // Load fontset
     for (int i = 0; i < 80; ++i)
@@ -58,23 +58,54 @@ void Chip8::LoadGame(const std::string& gamePath) {
     gameFile.close();
 }
 
-void Chip8::EmulateCycle() {
+void Chip8::Idle(Context& context) {
+    // Emulate one cycle
+    EmulateCycle(context);
+
+    // The delay timer and the sound timer. 
+    // They both work the same way; they should be decremented by one 60 times per second (ie. at 60 Hz). 
+    // This is independent of the speed of the fetch/decode/execute loop below.
+    const constexpr double dt = 1.0 / 60.0;
+    
+    m_globalTimersDelta += context.dt();
+    while (m_globalTimersDelta > dt) {
+        m_globalTimersDelta = 0;
+        Tick(context);
+    }
+}
+
+void Chip8::Display(Context& context) {
+    // If the draw flag is set, update the screen
+    if(drawFlag) {
+        renderer.Display();
+        drawFlag = false;
+    }
+}
+
+void Chip8::EmulateCycle(Context& context) {
     // Fetch opcode
-    opcode = memory[pc] << 8 | memory[pc + 1];
+
+    /**
+     * Current opcode.
+     * The Chip 8 has 35 opcodes which are all two bytes long.
+     * To store the current opcode, we need a data type that allows us to store two bytes.
+     * An uint16_t has the length of two bytes and therefor fits our needs.
+     */
+    uint16_t opcode = memory[pc] << 8 | memory[pc + 1];
 
     // Decode opcode
-    unsigned short x   = (opcode & 0x0F00) >> 8;
-    unsigned short y   = (opcode & 0x00F0) >> 4;
-    unsigned short n   = opcode & 0x000F; // the lowest 4 bits
-    unsigned short nn  = opcode & 0x00FF; // the lowest 8 bits
-    unsigned short nnn = opcode & 0x0FFF; // the lowest 12 bits
+    uint16_t x   = (opcode & 0x0F00) >> 8;
+    uint16_t y   = (opcode & 0x00F0) >> 4;
+    uint16_t n   = opcode & 0x000F; // the lowest 4 bits
+    uint16_t nn  = opcode & 0x00FF; // the lowest 8 bits
+    uint16_t nnn = opcode & 0x0FFF; // the lowest 12 bits
 
     switch (opcode & 0xF000) {
         case 0x0000:
             switch (opcode) {
                 case 0x00E0: // 0x00E0: Clears the screen
                     LOG(LOG_INFO, "Clears the screen");
-                    memset(gfx, 0, sizeof(unsigned char) * 64 * 32);
+                    renderer.Clear();
                     drawFlag = true;
                     break;
 
@@ -117,7 +148,7 @@ void Chip8::EmulateCycle() {
 
         case 0x6000: // 6XNN: Sets VX to NN.
             LOG(LOG_INFO, "Sets V[" << FORMAT_HEX(x) << "] to " << FORMAT_HEX(nn));
-            V[x] = (unsigned char)nn;
+            V[x] = (uint8_t)nn;
             pc += 2;
             break;
 
@@ -214,7 +245,7 @@ void Chip8::EmulateCycle() {
             break;
 
         case 0xB000: // BNNN: Jumps to the address NNN plus V0.
-            LOG(LOG_INFO, "Jump to " << FORMAT_HEX(nnn)) << " + V[0] (" << FORMAT_HEX((unsigned int)V[0] << ")");
+            LOG(LOG_INFO, "Jump to " << FORMAT_HEX(nnn) << " + V[0] (" << FORMAT_HEX((unsigned int)V[0]) << ")");
             pc = V[0] + (nnn);
             break;
 
@@ -231,16 +262,16 @@ void Chip8::EmulateCycle() {
                      // As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn,
                      // and to 0 if that does not happen.
             LOG(LOG_INFO, "Draw sprite at (V[" << FORMAT_HEX(x) << "], V[" << FORMAT_HEX(y) << "]) = (" << FORMAT_HEX((unsigned int)V[x]) << ", " << FORMAT_HEX((unsigned int)V[y]) << ") of height " << n);
-            unsigned short pixel;
+            uint16_t pixel;
 
             V[0xF] = 0;
             for (int yline = 0; yline < n; yline++) {
                 pixel = memory[I + yline];
                 for (int xline = 0; xline < 8; xline++) {
                     if ((pixel & (0x80 >> xline)) != 0) {
-                        if (gfx[(V[x] + xline + ((V[y] + yline) * 64))] == 1)
+                        if (renderer[(V[x] + xline + ((V[y] + yline) * GFX_COLS))] == 1)
                             V[0xF] = 1;
-                        gfx[V[x] + xline + ((V[y] + yline) * 64)] ^= 1;
+                        renderer[V[x] + xline + ((V[y] + yline) * GFX_COLS)] ^= 1;
                     }
                 }
             }
@@ -281,15 +312,13 @@ void Chip8::EmulateCycle() {
 
                 case 0x0A: // FX0A: A key press is awaited, and then stored in VX.
                     LOG(LOG_INFO, "Wait for key instruction");
-                    while (true) {
-                        for (int i = 0; i < 16; i++) {
-                            if (context.key(i)) {
-                                V[x] = i;
-                                break;
-                            }
+                    for (int i = 0; i < 16; i++) {
+                        if (context.key(i)) {
+                            V[x] = i;
+                            pc += 2;
+                            break;
                         }
                     }
-                    pc += 2;
                     break;
 
                 case 0x15: // FX15: Sets the delay timer to VX.
@@ -355,7 +384,9 @@ void Chip8::EmulateCycle() {
             LOG(LOG_ERROR, "Unknown opcode: " << FORMAT_HEX(opcode));
             exit(2);
     }
+}
 
+void Chip8::Tick(Context& context) {
     // Update timers
     if (delayTimer > 0)
         --delayTimer;
@@ -363,8 +394,8 @@ void Chip8::EmulateCycle() {
     if (soundTimer > 0) {
         --soundTimer;
         if (soundTimer == 0)
-            context.audio().playBeep();
+            context.playBeep();
         else
-            context.audio().stopAudio();
+            context.stopAudio();
     }
 }
