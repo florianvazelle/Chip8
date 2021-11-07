@@ -2,6 +2,8 @@
 
 #include "Vertex.hpp"
 
+#include <cstring>
+
 static GLchar texture_vert_shader[] = {
     #include "Texture.vert.h"
 };
@@ -13,8 +15,8 @@ static GLchar texture_frag_shader[] = {
 Renderer::Renderer() {
     /* Load shaders */
 
-    m_program.LoadShader(GL_VERTEX_SHADER, "C:\\Users\\ponyt\\Documents\\GitHub\\chip8\\shaders\\Texture.vert");
-    m_program.LoadShader(GL_FRAGMENT_SHADER, "C:\\Users\\ponyt\\Documents\\GitHub\\chip8\\shaders\\Texture.frag");
+    m_program.LoadShader(GL_VERTEX_SHADER, texture_vert_shader);
+    m_program.LoadShader(GL_FRAGMENT_SHADER, texture_frag_shader);
     m_program.Create();
 
     GLuint shader = m_program.GetProgram();

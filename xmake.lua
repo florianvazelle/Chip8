@@ -21,6 +21,7 @@ add_rules("mode.debug", "mode.release")
 
 -- the debug mode
 if is_mode("debug") then
+    add_defines("__CHIP8_DEBUG__")
     
     -- enable the debug symbols
     set_symbols("debug")

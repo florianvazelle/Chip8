@@ -63,27 +63,13 @@ void Shader::ValidateProgram(GLenum status, GLuint shader) const {
     }
 }
 
-void Shader::LoadShader(GLenum type, const char *filename) {
-    // 1. Charger le fichier en memoire
-    std::ifstream fin(filename, std::ios::in | std::ios::binary);
-    fin.seekg(0, std::ios::end);
-    uint32_t length = (uint32_t)fin.tellg();
-    fin.seekg(0, std::ios::beg);
-    char *buffer = nullptr;
-    buffer = new char[length + 1];
-    buffer[length] = '\0';
-    fin.read(buffer, length);
-
+void Shader::LoadShader(GLenum type, const char *buffer) {
     // 2. Creer le shader object
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &buffer, nullptr);
 
     // 3. Le compiler
     glCompileShader(shader);
-
-    // 4. Nettoyer
-    delete[] buffer;
-    fin.close(); // non obligatoire ici
 
     m_shaders.push_back(shader);
 

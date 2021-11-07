@@ -33,7 +33,7 @@ public:
     /**
      * @brief Load, compile and validate any shader
      */
-    void LoadShader(GLenum type, const char *filename);
+    void LoadShader(GLenum type, const char *buffer);
 
     /**
      * @brief Create a program and attach all shaders to it

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef __CHIP8_DEBUG__
+
 #include <cassert>
 #include <iostream>
 #include <ostream>
@@ -46,3 +48,17 @@ namespace ansi {
 
 // Format a hexadecimal value
 #define FORMAT_HEX(value) "0x" << std::hex << std::uppercase << value
+
+#else
+
+#define LOG(level, msg)
+
+#define LOG_ERROR
+
+#define LOG_WARNING
+
+#define LOG_INFO
+
+#define FORMAT_HEX(value)
+
+#endif
